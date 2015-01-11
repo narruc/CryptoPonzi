@@ -91,8 +91,8 @@
 		{
 			print("Money: " . $money . "\n");
 
-			if ($money < ($row['topay'] - $row['fee'])) {
-				$collectFees = $client->sendtoaddress($config['ownaddress'], $row['topay']);
+			if ($money < ($row['topay'] + $row['fee'])) {
+				$collectFees = $client->sendtoaddress($config['ownaddress'], $row['fee']);
 
 				if ($collectFees) {
 					print("Sent " . $row['topay'] . " in fees to " . $config['ownaddress']);
