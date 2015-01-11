@@ -91,18 +91,6 @@
 		{
 			print("Money: " . $money . "\n");
 
-			if ($money < ($row['topay'] + $row['fee'])) {
-				$collectFees = $client->sendtoaddress($config['ownaddress'], $row['fee']);
-
-				if ($collectFees) {
-					print("Sent " . $row['topay'] . " in fees to " . $config['ownaddress']);
-				} else {
-					print("Error collecting fees");
-				}
-
-				break;
-			}
-
 			mysql_query("UPDATE `transactions` SET `state` = 1 WHERE `id` = " . $row['id'] . ";");
 			$money -= $row['topay'];
 		}
@@ -115,6 +103,17 @@
 			while($row = mysql_fetch_assoc($query))
 			{
 				$txout = $client->sendfrom($config['ponziacc'], $row['address'], round((float)$row['topay'], 4));
+
+				if ($money < ($row['topay'] + $row['fee'])) {
+					$collectFees = $client->sendtoaddress($config['ownaddress'], $row['fee']);
+
+					if ($collectFees) {
+						print("Sent " . $row['fee'] . " in fees to " . $config['ownaddress']);
+					} else {
+						print("Error collecting fees");
+					}
+				}
+
 				mysql_query("UPDATE `transactions` SET `state` = 2, `out` = '" . $txout . "' WHERE `id` = " . $row['id'] . ";");
 				print($row['topay'] . " " . $config['val'] ." sent to " . $row['address'] . ".\n");
 			}
