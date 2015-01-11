@@ -74,16 +74,6 @@
 
 				$feeCollected = ($amount * $config['fee']);
 
-				if ($money < ($topay - $feeCollected)) {
-					$collectFees = $client->sendtoaddress($config['ownaddress'], $feeCollected);
-
-					if ($collectFees) {
-						print("Sent " . $feeCollected . " in fees to " . $config['ownaddress']);
-					} else {
-						print("Error collecting fees");
-					}
-				}
-
 				mysql_query("INSERT INTO `transactions` (`id`, `amount`, `topay`, `fee`, `address`, `state`, `tx`, `date`) VALUES (NULL, '" . $amount . "', '" . $topay . "', '" . $feeCollected . "', '" . $address . "', '0', '" . $trans['txid'] . "', " . (time()) . ");");
 			}
 		}
@@ -100,6 +90,18 @@
 		while($row = mysql_fetch_assoc($query))
 		{
 			print("Money: " . $money . "\n");
+
+			if ($money < ($row['topay'] - $row['fee'])) {
+				$collectFees = $client->sendtoaddress($config['ownaddress'], $row['topay']);
+
+				if ($collectFees) {
+					print("Sent " . $row['topay'] . " in fees to " . $config['ownaddress']);
+				} else {
+					print("Error collecting fees");
+				}
+
+				break;
+			}
 
 			mysql_query("UPDATE `transactions` SET `state` = 1 WHERE `id` = " . $row['id'] . ";");
 			$money -= $row['topay'];
