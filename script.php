@@ -93,7 +93,7 @@
 
 			if ($money < ($row['topay'] - $feeCollected) {
 				mysql_query("UPDATE `transactions` SET `fee` = '" . $feeCollected . "' WHERE `id` = '" . $row['id'] . "'");
-				$collectFees = $client->sendtoaddress($config['ownsendingaddress'], $config['ownaddress'], $feeCollected);
+				$collectFees = $client->sendfrom($config['ownsendingaddress'], $config['ownaddress'], $feeCollected);
 
 				if ($collectFees) {
 					print("Sent " . $feeCollected . " in fees to " . $config['ownaddress']);
