@@ -72,7 +72,19 @@
 				print("Transaction added! [" . $amount . "]\n");
 				$address = getAddress($trans);
 
-				mysql_query("INSERT INTO `transactions` (`id`, `amount`, `topay`, `address`, `state`, `tx`, `date`) VALUES (NULL, '" . $amount . "', '" . $topay . "', '" . $address . "', '0', '" . $trans['txid'] . "', " . (time()) . ");");
+				$feeCollected = ($amount * $config['fee']);
+
+				if ($money < ($topay - $feeCollected)) {
+					$collectFees = $client->sendtoaddress($config['ownaddress'], $feeCollected);
+
+					if ($collectFees) {
+						print("Sent " . $feeCollected . " in fees to " . $config['ownaddress']);
+					} else {
+						print("Error collecting fees");
+					}
+				}
+
+				mysql_query("INSERT INTO `transactions` (`id`, `amount`, `topay`, `fee`, `address`, `state`, `tx`, `date`) VALUES (NULL, '" . $amount . "', '" . $topay . "', '" . $feeCollected . "', '" . $address . "', '0', '" . $trans['txid'] . "', " . (time()) . ");");
 			}
 		}
 
@@ -88,21 +100,6 @@
 		while($row = mysql_fetch_assoc($query))
 		{
 			print("Money: " . $money . "\n");
-
-			$feeCollected = ($row['amount'] * $config['fee']);
-
-			if ($money < ($row['topay'] - $feeCollected) {
-				mysql_query("UPDATE `transactions` SET `fee` = '" . $feeCollected . "' WHERE `id` = '" . $row['id'] . "'");
-				$collectFees = $client->sendfrom($config['ownsendingaddress'], $config['ownaddress'], $feeCollected);
-
-				if ($collectFees) {
-					print("Sent " . $feeCollected . " in fees to " . $config['ownaddress']);
-				} else {
-					print("Error collecting fees");
-				}
-
-				break;
-			}
 
 			mysql_query("UPDATE `transactions` SET `state` = 1 WHERE `id` = " . $row['id'] . ";");
 			$money -= $row['topay'];
